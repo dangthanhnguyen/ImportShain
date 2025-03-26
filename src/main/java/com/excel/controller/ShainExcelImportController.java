@@ -1,8 +1,8 @@
 package com.excel.controller;
 
 import com.excel.util.ImportResult;
-import com.excel.model.ShainExcelImportModel;
-import com.excel.model.ShainExcelImportModel.ImportType;
+import com.excel.model.ShainExcelImportViewModel;
+import com.excel.model.ShainExcelImportViewModel.ImportType;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -14,10 +14,14 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.util.Optional;
 
+/**
+ * 社員Excelインポート処理を管理するコントローラクラス。
+ * ユーザーがExcelファイルを選択し、インポート方法を選択してインポート処理を実行するUIを提供します。
+ */
 public class ShainExcelImportController {
 
     // 社員Excelインポートモデルのインスタンス
-    private final ShainExcelImportModel model = new ShainExcelImportModel();
+    private final ShainExcelImportViewModel model = new ShainExcelImportViewModel();
 
     @FXML
     private Button endButton; // 終了ボタン
@@ -83,25 +87,54 @@ public class ShainExcelImportController {
 
     /**
      * 実行ボタンのクリックイベントを処理します。
-     * 確認ダイアログを表示し、ユーザーの選択に応じてインポート処理を実行します。
+     * ファイルパスを検証し、確認ダイアログを表示してインポート処理を実行します。
      */
     @FXML
     private void handleExecuteAction() {
         String filePath = folderPathField.getText().trim();
 
+        // ファイルパスを検証
+        if (!validateFilePath(filePath)) {
+            return;
+        }
+
+        // 確認ダイアログを表示し、ユーザーの選択を取得
+        if (showConfirmationDialog()) {
+            // ユーザーが「はい」を選択した場合、インポート処理を実行
+            executeImport(filePath);
+        }
+        // ユーザーが「いいえ」を選択した場合、何もしない
+    }
+
+    /**
+     * ファイルパスを検証し、不正な場合は警告を表示します。
+     *
+     * @param filePath 検証するファイルパス
+     * @return ファイルパスが有効な場合はtrue、無効な場合はfalse
+     */
+    private boolean validateFilePath(String filePath) {
         // ファイルパスが空の場合、警告を表示
         if (filePath.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "警告", "実行する前にExcelファイルを選択してください。");
-            return;
+            return false;
         }
 
         // ファイルが存在しない、またはファイルでない場合、警告を表示
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) {
             showAlert(Alert.AlertType.WARNING, "警告", "実行する前に有効な Excel ファイルを選択してください。");
-            return;
+            return false;
         }
 
+        return true;
+    }
+
+    /**
+     * 確認ダイアログを表示し、ユーザーの選択を取得します。
+     *
+     * @return ユーザーが「はい」を選択した場合はtrue、「いいえ」を選択した場合はfalse
+     */
+    private boolean showConfirmationDialog() {
         // 確認ダイアログを表示
         Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
         confirmationAlert.setTitle("確認");
@@ -116,24 +149,22 @@ public class ShainExcelImportController {
         // ユーザーの選択を待つ
         Optional<ButtonType> result = confirmationAlert.showAndWait();
 
-        // ユーザーが「はい」を選択した場合、インポート処理を実行
-        if (result.isPresent() && result.get() == buttonTypeYes) {
-            executeImport(filePath);
-        }
-        // ユーザーが「いいえ」を選択した場合、何もしない
+        // ユーザーが「はい」を選択した場合はtrueを返す
+        return result.isPresent() && result.get() == buttonTypeYes;
     }
 
     /**
      * インポート処理を実行します。
      * 処理中にプログレスインジケータを表示し、追加および更新のレコード数をリアルタイムで更新します。
+     *
      * @param filePath インポートするExcelファイルのパス
      */
     private void executeImport(String filePath) {
         // 処理中ダイアログを作成
         Dialog<Void> progressDialog = createProgressDialog();
 
-        // 選択されたインポートタイプを判定
-        ImportType importType = determineImportType();
+        // 選択されたインポートタイプを検証し取得
+        ImportType importType = validateAndGetImportType();
         if (importType == null) {
             // インポートタイプが選択されていない場合、ダイアログを閉じて終了
             progressDialog.close();
@@ -148,8 +179,20 @@ public class ShainExcelImportController {
     }
 
     /**
+     * 選択されたインポートタイプを検証し取得します。
+     *
+     * @return インポートタイプ（選択されていない場合はnull）
+     */
+    private ImportType validateAndGetImportType() {
+        // 選択されたインポートタイプを判定
+        ImportType importType = determineImportType();
+        return importType;
+    }
+
+    /**
      * 処理中ダイアログを作成します。
      * プログレスインジケータと追加・更新レコード数を表示するラベルを含みます。
+     *
      * @return 設定済みのダイアログ
      */
     private Dialog<Void> createProgressDialog() {
@@ -189,6 +232,7 @@ public class ShainExcelImportController {
 
     /**
      * 選択されたラジオボタンに基づいてインポートタイプを判定します。
+     *
      * @return インポートタイプ（選択されていない場合はnull）
      */
     private ImportType determineImportType() {
@@ -207,6 +251,7 @@ public class ShainExcelImportController {
 
     /**
      * モデルからexecuteImportメソッドを呼び出し、インポート処理の結果を処理します。
+     *
      * @param filePath インポートするExcelファイルのパス
      * @param importType インポートタイプ
      * @param progressDialog 処理中ダイアログ（処理完了時に閉じる）
@@ -226,54 +271,78 @@ public class ShainExcelImportController {
             });
         });
 
-        // タスクが成功した場合の処理
-        importTask.setOnSucceeded(event -> {
-            progressDialog.close();
-            ImportResult result = importTask.getValue();
-            StringBuilder message = new StringBuilder();
+        // タスクが成功した場合の処理をハンドラに設定
+        importTask.setOnSucceeded(event -> handleImportSuccess(importTask, progressDialog));
 
-            // エラーメッセージがある場合、エラーを表示
-            if (result.getErrorMessages() != null && !result.getErrorMessages().isEmpty()) {
-                message.append("以下のエラーが発生しました:\n");
-                message.append(String.join("\n", result.getErrorMessages()));
-                showAlert(Alert.AlertType.ERROR, "エラー", message.toString());
-            } else {
-                // エラーがない場合、処理結果を表示
-                message.append("処理が完了しました。\n")
-                       .append("追加: ").append(result.getInsertedCount()).append(" 件\n")
-                       .append("更新: ").append(result.getUpdatedCount()).append(" 件\n")
-                       .append("合計: ").append(result.getTotalProcessed()).append(" 件");
-                showAlert(Alert.AlertType.INFORMATION, "完了", message.toString());
-            }
-        });
+        // タスクが失敗した場合の処理をハンドラに設定
+        importTask.setOnFailed(event -> handleImportFailure(importTask, progressDialog));
+    }
 
-        // タスクが失敗した場合の処理
-        importTask.setOnFailed(event -> {
-            progressDialog.close();
-            Throwable e = importTask.getException();
-            StringBuilder message = new StringBuilder();
+    /**
+     * インポート処理が成功した場合の結果を処理します。
+     *
+     * @param importTask インポートタスク
+     * @param progressDialog 処理中ダイアログ（処理完了時に閉じる）
+     */
+    private void handleImportSuccess(Task<ImportResult> importTask, Dialog<Void> progressDialog) {
+        // 処理中ダイアログを閉じる
+        progressDialog.close();
 
-            // 外れ値からエラーメッセージを取得
-            message.append(e.getMessage());
+        // インポート結果を取得
+        ImportResult result = importTask.getValue();
+        StringBuilder message = new StringBuilder();
 
-            // ImportResultからエラーメッセージを取得（可能であれば）
-            try {
-                ImportResult result = importTask.getValue();
-                if (result != null && result.getErrorMessages() != null && !result.getErrorMessages().isEmpty()) {
-                    message.append("\n\n詳細なエラー:\n");
-                    message.append(String.join("\n", result.getErrorMessages()));
-                }
-            } catch (Exception ex) {
-                // タスクが失敗した場合、結果を取得できない可能性がある
-                message.append("\nエラーの詳細を取得できませんでした。");
-            }
-
+        // エラーメッセージがある場合、エラーを表示
+        if (result.getErrorMessages() != null && !result.getErrorMessages().isEmpty()) {
+            message.append("以下のエラーが発生しました:\n");
+            message.append(String.join("\n", result.getErrorMessages()));
             showAlert(Alert.AlertType.ERROR, "エラー", message.toString());
-        });
+        } else {
+            // エラーがない場合、処理結果を表示
+            message.append("処理が完了しました。\n")
+                   .append("追加: ").append(result.getInsertedCount()).append(" 件\n")
+                   .append("更新: ").append(result.getUpdatedCount()).append(" 件\n")
+                   .append("合計: ").append(result.getTotalProcessed()).append(" 件");
+            showAlert(Alert.AlertType.INFORMATION, "完了", message.toString());
+        }
+    }
+
+    /**
+     * インポート処理が失敗した場合のエラーを処理します。
+     *
+     * @param importTask インポートタスク
+     * @param progressDialog 処理中ダイアログ（処理完了時に閉じる）
+     */
+    private void handleImportFailure(Task<ImportResult> importTask, Dialog<Void> progressDialog) {
+        // 処理中ダイアログを閉じる
+        progressDialog.close();
+
+        // タスクから発生した例外を取得
+        Throwable e = importTask.getException();
+        StringBuilder message = new StringBuilder();
+
+        // 例外からエラーメッセージを取得
+        message.append(e.getMessage());
+
+        // ImportResultからエラーメッセージを取得（可能であれば）
+        try {
+            ImportResult result = importTask.getValue();
+            if (result != null && result.getErrorMessages() != null && !result.getErrorMessages().isEmpty()) {
+                message.append("\n\n詳細なエラー:\n");
+                message.append(String.join("\n", result.getErrorMessages()));
+            }
+        } catch (Exception ex) {
+            // タスクが失敗した場合、結果を取得できない可能性がある
+            message.append("\nエラーの詳細を取得できませんでした。");
+        }
+
+        // エラーメッセージを表示
+        showAlert(Alert.AlertType.ERROR, "エラー", message.toString());
     }
 
     /**
      * アラートダイアログを表示します。
+     *
      * @param type アラートの種類（情報、エラー、警告など）
      * @param title アラートのタイトル
      * @param message 表示するメッセージ

@@ -4,15 +4,13 @@
 
 <AnchorPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.excel.controller.ShainExcelImportController">
     <VBox spacing="10" style="-fx-padding: 20;" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0">
-        
-        <!-- HBox tiêu đề -->
+
         <HBox spacing="10">
             <Label text="社員情報データEXCEL取込" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
             <Region HBox.hgrow="ALWAYS" />
             <Button text="終了" fx:id="endButton" />
         </HBox>
 
-        <!-- Accordion không ép chiều cao -->
         <Accordion VBox.vgrow="NEVER">
             <panes>
                 <TitledPane text="取込データ">
@@ -27,7 +25,7 @@
         </Accordion>
         <Accordion VBox.vgrow="NEVER">
             <panes>
-                <!-- 取込方法 + Nút 実行 -->
+                <!-- 取込方法 + 実行 -->
                 <TitledPane text="取込方法">
                     <VBox spacing="10" style="-fx-padding: 10;">
                         <RadioButton text="追加のみ" fx:id="insertImport" selected="true">
@@ -37,10 +35,8 @@
                         </RadioButton>
                         <RadioButton text="追加・更新" fx:id="insertAndUpdateImport" toggleGroup="$importMethodGroup" />
                         <RadioButton text="全件入替" fx:id="newImport" toggleGroup="$importMethodGroup" />
-                        <!-- Đẩy 実行 xuống cuối -->
+
                         <Region VBox.vgrow="ALWAYS"/>
-                        
-                        <!-- HBox để căn phải -->
                         <HBox alignment="BOTTOM_RIGHT">
                             <Button text="実行" fx:id="executeButton"/>
                         </HBox>

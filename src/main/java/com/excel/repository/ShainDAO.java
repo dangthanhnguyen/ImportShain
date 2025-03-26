@@ -47,7 +47,6 @@ public class ShainDAO {
 
     /**
      * パラメータなしのコンストラクタ。
-     * 全てのフィールドをnullで初期化します。
      */
     public ShainDAO() {
     }
