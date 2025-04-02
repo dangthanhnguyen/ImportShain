@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.openjfx:javafx-controls:23'
+    implementation 'org.openjfx:javafx-fxml:23'
+    implementation 'org.postgresql:postgresql:42.7.4'
+    implementation 'org.apache.poi:poi:5.2.3'
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
+    implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+    implementation 'org.openjfx:javafx-base:23'
+
+    implementation 'org.apache.poi:poi:5.2.3'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
+
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+    
+    testImplementation 'org.testfx:testfx-junit5:4.0.16-alpha'
+    testImplementation 'org.testfx:testfx-core:4.0.16-alpha'
+}
+
+javafx {
+    version = "23"
+    modules = ['javafx.controls', 'javafx.fxml']
+}
+
+application {
+    mainClass = 'com.excel.ApplicationMain'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+test {
+    useJUnitPlatform()
+    jvmArgs '-XX:+EnableDynamicAgentLoading'
+}
+
+def javafxLibPath = "C:/ProjectEclipse/社員情報EXCEL/javafx-sdk-23.0.2/lib"
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs = [
+        "--module-path", javafxLibPath,
+        "--add-modules", "javafx.controls,javafx.fxml"
+    ]
+}
+
